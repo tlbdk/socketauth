@@ -1,0 +1,31 @@
+{
+  "name": "socketauth",
+  "version": "1.0.0",
+  "description": "Forward a socket over https with authentication",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tlbdk/socketauth.git"
+  },
+  "author": "Troels Liebe Bentsen <tlb@rapanden.dk>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tlbdk/socketauth/issues"
+  },
+  "homepage": "https://github.com/tlbdk/socketauth#readme",
+  "devDependencies": {
+    "@types/mocha": "^2.2.45",
+    "@types/node": "^8.5.2",
+    "babel-eslint": "^7.2.3",
+    "eslint": "^4.5.0",
+    "eslint-config-prettier": "^2.3.0",
+    "eslint-plugin-prettier": "^2.2.0",
+    "mocha": "^4.1.0",
+    "nyc": "^11.4.1",
+    "prettier": "^1.5.3",
+    "unexpected": "^10.36.2"
+  }
+}
