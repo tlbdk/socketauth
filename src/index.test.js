@@ -6,6 +6,7 @@ const httpRequest = require('./httpRequest')
 const { spawn } = require('child_process')
 const fs = require('fs')
 const net = require('net')
+const SshAgentWrapper = require('./ssh-agent-wrapper')
 
 let sockPath = '/tmp/test.sock'
 
@@ -79,22 +80,22 @@ describe('Socket forward', () => {
           let requestLength = 4 + agentBuf.readInt32BE(0)
           if (requestLength >= agentBuf.length) {
             let type = agentBuf.readInt8(4)
+            let payload = agentBuf.slice(0, requestLength)
+            agentBuf = agentBuf.slice(requestLength)
             switch (type) {
               case SSH_AGENT.IDENTITIES_ANSWER: {
                 console.log(`sshAgentSock: identity answer`)
-                sshClientSock.write(agentBuf)
-                agentBuf = new Buffer(0)
+                sshClientSock.write(payload)
                 break
               }
               case SSH_AGENT.SIGN_RESPONSE: {
                 console.log(`sshAgentSock: sign`)
-                sshClientSock.write(agentBuf)
-                agentBuf = new Buffer(0)
+                sshClientSock.write(payload)
                 break
               }
               default: {
                 console.log(`sshAgentSock: ${data.length}`)
-                sshClientSock.write(agentBuf)
+                sshClientSock.write(payload)
               }
             }
           }
@@ -111,22 +112,25 @@ describe('Socket forward', () => {
           let requestLength = 4 + sshBuf.readInt32BE(0)
           if (requestLength >= sshBuf.length) {
             let type = sshBuf.readInt8(4)
+            let payload = sshBuf.slice(0, requestLength)
+            sshBuf = sshBuf.slice(requestLength)
             switch (type) {
               case SSH_AGENT_CLIENT.REQUEST_IDENTITIES: {
                 console.log(`sshClientSock: Request identities`)
-                sshAgentSock.write(data)
-                sshBuf = new Buffer(0)
+                sshAgentSock.write(payload)
                 break
               }
               case SSH_AGENT_CLIENT.SIGN_REQUEST: {
                 console.log(`sshClientSock: Sign request`)
-                sshAgentSock.write(data)
-                sshBuf = new Buffer(0)
+                sshAgentSock.write(payload)
                 break
               }
               default: {
                 console.log(`sshClientSock: ${data.length}`)
-                sshAgentSock.write(data)
+                let failedResponse = new Buffer(5)
+                failedResponse.writeInt32BE(1, 0)
+                failedResponse.writeInt8(SSH_AGENT.FAILURE, 4)
+                sshClientSock.write(failedResponse)
               }
             }
           }
