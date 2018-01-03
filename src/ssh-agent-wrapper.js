@@ -3,6 +3,8 @@
 
 const net = require('net')
 
+// https://tools.ietf.org/id/draft-miller-ssh-agent-00.html#rfc.section.8
+
 const SSH_AGENT = {
   FAILURE: 5,
   SUCCESS: 6,

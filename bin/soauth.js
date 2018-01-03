@@ -4,6 +4,7 @@
 
 // Links:
 // * https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances
+// * https://github.com/nathan7/peercred
 
 const { spawn } = require('child_process')
 const net = require('net')
