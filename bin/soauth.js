@@ -2,6 +2,9 @@
 // @ts-check
 'use strict'
 
+// Links:
+// * https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances
+
 const { spawn } = require('child_process')
 const net = require('net')
 const fs = require('fs')
