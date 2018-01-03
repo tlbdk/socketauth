@@ -2,7 +2,7 @@
 'use strict;'
 
 const http = require('http')
-const httpRequest = require('./httpRequest')
+const httpRequest = require('./httprequest')
 const { spawn } = require('child_process')
 const fs = require('fs')
 const net = require('net')
@@ -17,18 +17,19 @@ if (fs.existsSync(sockPath)) {
 describe('Socket forward', () => {
   let sshAgentWrapper = new SshAgentWrapper(process.env['SSH_AUTH_SOCK'])
   const httpServer = http.createServer((req, res) => {
-    if (req.method === 'POST' && req.url === '/') {
+    if (req.method === 'POST') {
       req.on('data', data => {
-        sshAgentWrapper.sendRequests(data).then(response => {
-          if (!response) return
+        Promise.all(sshAgentWrapper.sendRequests(data)).then(responses => {
+          res.setHeader('Content-Type', 'application/octet-stream')
           res.statusCode = 200
-          res.setHeader('Content-Type', 'application/binary')
-          res.end(response.payload)
+          let payloads = Buffer.concat(
+            responses.map(response => response.payload)
+          )
+          res.end(payloads)
         })
       })
       req.on('end', () => {
-        res.statusCode = 400
-        res.end()
+        console.log('end')
       })
     } else {
       res.statusCode = 404
@@ -53,9 +54,26 @@ describe('Socket forward', () => {
 
   it('response from ssh-agent', done => {
     const unixServer = net.createServer(sshClientSock => {
-      let sshAgentWrapper = new SshAgentWrapper(process.env['SSH_AUTH_SOCK'])
+      //let sshAgentWrapper = new SshAgentWrapper(process.env['SSH_AUTH_SOCK'])
       sshClientSock.on('data', data => {
-        let responses = sshAgentWrapper.sendRequests(data)
+        httpRequest(
+          'POST',
+          `http://${hostname}:${port}/`,
+          {
+            'Content-Type': 'application/octet-stream',
+            'Contant-Length': data.length
+          },
+          data,
+          { debug: false }
+        )
+          .then(response => {
+            sshClientSock.write(response.data)
+            console.log(response.statusCode)
+          })
+          .catch(e => {
+            console.error(e)
+          })
+        /*let responses = sshAgentWrapper.sendRequests(data)
         for (let responsePromise of responses) {
           responsePromise
             .then(response => {
@@ -65,11 +83,11 @@ describe('Socket forward', () => {
             .catch(e => {
               console.error(e)
             })
-        }
+        }*/
       })
       sshClientSock.on('end', () => {
         console.log(`sshClientSock: Closed`)
-        sshAgentWrapper.close()
+        //sshAgentWrapper.close()
       })
     })
     unixServer.listen(sockPath, () => {
@@ -90,18 +108,4 @@ describe('Socket forward', () => {
   })
 })
 
-/* httpRequest(
-          'POST',
-          `http://${hostname}:${port}/`,
-          {
-            'Content-Type': 'application/binary',
-            'Contant-Length': data.length
-          },
-          data
-        )
-          .then(response => {
-            console.log(response.statusCode)
-          })
-          .catch(e => {
-            console.error(e)
-          }) */
+/*  */

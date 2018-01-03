@@ -21,7 +21,7 @@ const crypto = require('crypto')
  * @param {Object} headers
  * @param {Buffer|string} data
  * @param {Object} options
- * @param {number} [options.debug]
+ * @param {boolean} [options.debug]
  * @param {number} [options.maxResponseSize]
  * @param {number} [options.timeout]
  * @param {string} [options.ca]
@@ -65,9 +65,9 @@ function httpRequest(method, url, headers = null, data = null, options = {}) {
 
     var request = httpRequester(requestOptions, response => {
       let responseData = []
-      response.setEncoding('binary')
       response.on('data', chunk => {
         if (!Buffer.isBuffer(chunk)) {
+          console.log(`typeof: ${typeof chunk}`)
           chunk = Buffer.from(chunk, 'utf8')
         }
         if (chunk.length + responseData.length <= maxResponseSize) {
