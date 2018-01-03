@@ -6,7 +6,7 @@ const httpRequest = require('./httprequest')
 const { spawn } = require('child_process')
 const fs = require('fs')
 const net = require('net')
-const SshAgentWrapper = require('./ssh-agent-wrapper')
+let SshAgentWrapper = require('./ssh-agent-wrapper')
 
 let sockPath = '/tmp/test.sock'
 
@@ -17,7 +17,7 @@ if (fs.existsSync(sockPath)) {
 describe('Socket forward', () => {
   let sshAgentWrapper = new SshAgentWrapper(process.env['SSH_AUTH_SOCK'])
   const httpServer = http.createServer((req, res) => {
-    if (req.method === 'POST') {
+    if (req.method === 'POST' && req.url === '/ssh-agent') {
       req.on('data', data => {
         Promise.all(sshAgentWrapper.sendRequests(data)).then(responses => {
           res.setHeader('Content-Type', 'application/octet-stream')
@@ -58,7 +58,7 @@ describe('Socket forward', () => {
       sshClientSock.on('data', data => {
         httpRequest(
           'POST',
-          `http://${hostname}:${port}/`,
+          `http://localhost:${port}/ssh-agent`,
           {
             'Content-Type': 'application/octet-stream',
             'Contant-Length': data.length

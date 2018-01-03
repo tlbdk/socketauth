@@ -9,15 +9,36 @@
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/.bin/_mocha",
-            "args": ["-u", "tdd", "--timeout", "999999", "--colors", "src/**/*.test.js"],
+            "args": ["-u", "tdd", "--timeout", "999999", "--colors", "bin/**/*.test.js"],
             "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "soauth",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/soauth.js",
+            "args": ["ssh", "git@github.com"],
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "SOAUTH_URL": "http://test:test@localhost:3000/ssh-agent"
+            }
+        },
+        {
+            "name": "soauth-server",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/soauth-server.js",
+            "args": [],
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+            }
         },
         {
             "name": "Integration tests",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/.bin/_mocha",
-            "args": ["-u", "tdd", "--timeout", "999999", "--colors", "src/**/*.it.js"],
+            "args": ["-u", "tdd", "--timeout", "999999", "--colors", "./**/*.it.js"],
             "internalConsoleOptions": "openOnSessionStart"
         }
     ]

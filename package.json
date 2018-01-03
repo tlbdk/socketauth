@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Forward a socket over https with authentication",
   "main": "src/index.js",
+  "bin": {
+    "soauth-server": "./bin/soauth-server.js",
+    "soauth": "./bin/soauth.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

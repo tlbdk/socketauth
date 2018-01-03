@@ -43,7 +43,7 @@ function httpRequest(method, url, headers = null, data = null, options = {}) {
       port: curl.port,
       path: curl.path,
       method: method,
-      withCredentials: false,
+      auth: curl.auth,
       headers: headers,
       ca: ca
     }
