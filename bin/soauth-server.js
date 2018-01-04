@@ -4,6 +4,7 @@
 
 const http = require('http')
 const SshAgentWrapper = require('../src/ssh-agent-wrapper')
+const { parseSshOptions, parseGitSshCommand } = require('../src/sshutils')
 
 let listenPort = 3000
 
@@ -11,7 +12,10 @@ let sshAgentWrapper = new SshAgentWrapper(process.env['SSH_AUTH_SOCK'])
 const httpServer = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/ssh-agent') {
     let auth = req.headers['authorization'] || ''
-    let authMatch = req.headers['authorization'].match(/^Basic\s+(.+)$/)
+    let sshArgs = parseSshOptions(JSON.parse(req.headers['x-ssh-args'] || '{}'))
+    let gitArgs = parseGitSshCommand(sshArgs.commandOptions)
+
+    let authMatch = auth.match(/^Basic\s+(.+)$/)
     if (!authMatch) {
       res.statusCode = 401
       res.setHeader('WWW-Authenticate', 'Basic realm="Secure Area"')

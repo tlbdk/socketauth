@@ -5,7 +5,7 @@ const { spawn } = require('child_process')
 const expect = require('unexpected')
 
 describe('soauth', () => {
-  this.slow(10000)
+  //this.slow(10000)
   it('get response from github', async () => {
     let result = await runProcessAsync(
       `${__dirname}/soauth.js`,

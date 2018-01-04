@@ -70,6 +70,14 @@ class SshAgentWrapper {
           }
           case SSH_AGENT.IDENTITIES_ANSWER:
             if (requestType !== 'request_identities') return
+            let nKeys = message.payload.readUInt32BE(5)
+            let offset = 9
+            for (let i = 0; i < nKeys; i++) {
+              let key = readByteString(message.payload, offset)
+              offset += key.length
+              let comment = readByteString(message.payload, offset)
+              console.log(`SSH Key: ${comment.toString()}`)
+            }
             resolve({ type: 'identities_answer', payload: message.payload })
             break
           case SSH_AGENT.SIGN_RESPONSE: {
@@ -94,9 +102,9 @@ class SshAgentWrapper {
 
     let messages = []
     while (buffer.length >= 5) {
-      let requestLength = 4 + buffer.readInt32BE(0)
+      let requestLength = 4 + buffer.readUInt32BE(0)
       if (requestLength >= buffer.length) {
-        let type = buffer.readInt8(4)
+        let type = buffer.readUInt8(4)
         let payload = buffer.slice(0, requestLength)
         buffer = buffer.slice(requestLength)
         messages.push({ type, payload })
@@ -125,8 +133,8 @@ class SshAgentWrapper {
         }
         default: {
           let failedResponse = new Buffer(5)
-          failedResponse.writeInt32BE(1, 0)
-          failedResponse.writeInt8(SSH_AGENT.FAILURE, 4)
+          failedResponse.writeUInt32BE(1, 0)
+          failedResponse.writeUInt8(SSH_AGENT.FAILURE, 4)
           promises.push(
             Promise.resolve({ type: 'rejected', payload: failedResponse })
           )
@@ -141,6 +149,12 @@ class SshAgentWrapper {
       this.requests.push([requestTypes, resolve, reject])
     })
   }
+}
+
+function readByteString(buffer, offset) {
+  let keyLength = buffer.readUInt32BE(offset)
+  offset += 4
+  return buffer.slice(offset, offset + keyLength + 4)
 }
 
 module.exports = SshAgentWrapper

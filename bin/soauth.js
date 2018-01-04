@@ -21,7 +21,10 @@ if (process.argv.length < 3) {
 // Copy current enviroment
 let environment = { ...process.env }
 const soAuthUrl = environment['SOAUTH_URL']
-delete environment['SOAUTH_URL']
+if (!delete environment['SOAUTH_URL']) {
+  console.log('SOAUTH_URL needs to be set')
+  process.exit(255)
+}
 
 let command = process.argv[2]
 let args = process.argv.slice(3)
@@ -54,7 +57,8 @@ const unixServer = net.createServer(clientSocket => {
         soAuthUrl,
         {
           'Content-Type': 'application/octet-stream',
-          'Contant-Length': payload.length
+          'Contant-Length': payload.length,
+          'X-Ssh-Args': JSON.stringify(args)
         },
         payload,
         { debug: false }
