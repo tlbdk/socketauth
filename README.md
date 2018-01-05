@@ -27,5 +27,5 @@ exec ./bin/soauth.js $@
 Tell git to use the wrapper:
 
 ``` bash
-GIT_SSH=./sshwrapper.sh git clone git@github.com
+GIT_SSH=./sshsoauth.sh git clone git@github.com
 ```
