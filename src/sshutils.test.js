@@ -4,7 +4,7 @@
 const { parseSshOptions, parseGitSshCommand } = require('./sshutils')
 const expect = require('unexpected')
 
-describe.only('sshutils', () => {
+describe('sshutils', () => {
   describe('parseSshCommand', () => {
     it('-v git@github.com', () => {
       expect(parseSshOptions(['-v', 'git@github.com']), 'to equal', {
@@ -102,74 +102,74 @@ describe.only('sshutils', () => {
         commandOptions: []
       })
     })
-    describe('parseGitSshCommand', () => {
-      it(`git-upload-pack 'tlbdk/socketauth.git'`, () => {
-        expect(
-          parseGitSshCommand(['git-upload-pack', `'tlbdk/socketauth.git'`]),
-          'to equal',
-          {
-            command: 'git-upload-pack',
-            repo: 'tlbdk/socketauth'
-          }
-        )
-      })
-      it(`git-upload-pack tlbdk/socketauth.git`, () => {
-        expect(
-          parseGitSshCommand(['git-upload-pack', `tlbdk/socketauth.git`]),
-          'to equal',
-          {
-            command: 'git-upload-pack',
-            repo: 'tlbdk/socketauth'
-          }
-        )
-      })
-      it(`git-upload-pack tlbdk/socketauth`, () => {
-        expect(
-          parseGitSshCommand(['git-upload-pack', `tlbdk/socketauth`]),
-          'to equal',
-          {
-            command: 'git-upload-pack',
-            repo: 'tlbdk/socketauth'
-          }
-        )
-      })
-      it(`git-upload-pack tlbdk/socketauth/`, () => {
-        expect(
-          parseGitSshCommand(['git-upload-pack', `tlbdk/socketauth/`]),
-          'to equal',
-          {
-            command: 'git-upload-pack',
-            repo: 'tlbdk/socketauth'
-          }
-        )
-      })
-      it(`git-upload-pack2 tlbdk/socketauth/`, () => {
-        expect(
-          parseGitSshCommand(['git-upload-pack2', `tlbdk/socketauth/`]),
-          'to equal',
-          {
-            command: null,
-            repo: null
-          }
-        )
-      })
-      it(`git-upload-pack`, () => {
-        expect(parseGitSshCommand(['git-upload-pack']), 'to equal', {
+  })
+  describe('parseGitSshCommand', () => {
+    it(`git-upload-pack 'tlbdk/socketauth.git'`, () => {
+      expect(
+        parseGitSshCommand(['git-upload-pack', `'tlbdk/socketauth.git'`]),
+        'to equal',
+        {
+          command: 'git-upload-pack',
+          repo: 'tlbdk/socketauth'
+        }
+      )
+    })
+    it(`git-upload-pack tlbdk/socketauth.git`, () => {
+      expect(
+        parseGitSshCommand(['git-upload-pack', `tlbdk/socketauth.git`]),
+        'to equal',
+        {
+          command: 'git-upload-pack',
+          repo: 'tlbdk/socketauth'
+        }
+      )
+    })
+    it(`git-upload-pack tlbdk/socketauth`, () => {
+      expect(
+        parseGitSshCommand(['git-upload-pack', `tlbdk/socketauth`]),
+        'to equal',
+        {
+          command: 'git-upload-pack',
+          repo: 'tlbdk/socketauth'
+        }
+      )
+    })
+    it(`git-upload-pack tlbdk/socketauth/`, () => {
+      expect(
+        parseGitSshCommand(['git-upload-pack', `tlbdk/socketauth/`]),
+        'to equal',
+        {
+          command: 'git-upload-pack',
+          repo: 'tlbdk/socketauth'
+        }
+      )
+    })
+    it(`git-upload-pack2 tlbdk/socketauth/`, () => {
+      expect(
+        parseGitSshCommand(['git-upload-pack2', `tlbdk/socketauth/`]),
+        'to equal',
+        {
           command: null,
           repo: null
-        })
+        }
+      )
+    })
+    it(`git-upload-pack`, () => {
+      expect(parseGitSshCommand(['git-upload-pack']), 'to equal', {
+        command: null,
+        repo: null
       })
-      it(`empty string`, () => {
-        expect(parseGitSshCommand(['']), 'to equal', {
-          command: null,
-          repo: null
-        })
+    })
+    it(`empty string`, () => {
+      expect(parseGitSshCommand(['']), 'to equal', {
+        command: null,
+        repo: null
       })
-      it(`empty array`, () => {
-        expect(parseGitSshCommand([]), 'to equal', {
-          command: null,
-          repo: null
-        })
+    })
+    it(`empty array`, () => {
+      expect(parseGitSshCommand([]), 'to equal', {
+        command: null,
+        repo: null
       })
     })
   })
