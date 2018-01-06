@@ -9,7 +9,7 @@
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/node_modules/.bin/_mocha",
-            "args": ["-u", "tdd", "--timeout", "999999", "--colors", "src/**/*.test.js"],
+            "args": ["-u", "tdd", "--timeout", "999999", "--colors", "**/*.test.js"],
             "internalConsoleOptions": "openOnSessionStart"
         },
         {

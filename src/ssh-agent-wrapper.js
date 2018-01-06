@@ -73,10 +73,10 @@ class SshAgentWrapper {
             let nKeys = message.payload.readUInt32BE(5)
             let offset = 9
             for (let i = 0; i < nKeys; i++) {
-              let key = readByteString(message.payload, offset)
+              /* let key = readByteString(message.payload, offset)
               offset += key.length
               let comment = readByteString(message.payload, offset)
-              console.log(`SSH Key: ${comment.toString()}`)
+              console.log(`SSH Key: ${comment.toString()}`) */
             }
             resolve({ type: 'identities_answer', payload: message.payload })
             break
