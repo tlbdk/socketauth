@@ -103,8 +103,10 @@ describe('soauth', () => {
     console.log(JSON.stringify(sshAgentResult))
   })
 
-  it('get response from github', async () => {
+  it.only('get response from github', async () => {
     let [soauthCmd, soauthCmdPromise] = runProcessAsync(
+      //`${__dirname}/soauth.js`,
+      //['ssh', '-v', 'git@github.com'],
       'git',
       ['ls-remote', 'git@github.com:connectedcars/private-module.git'],
       {

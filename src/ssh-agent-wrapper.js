@@ -94,15 +94,25 @@ class SshAgentWrapper {
             }
             let payload = Buffer.from(message.payload)
             offset = 9
+            nKeys = 0
             for (let key of keys) {
               let keyPath = key.comment.toString('utf8').replace(/_/g, '/')
-              //if (keyPath.match(new RegExp(request.context.repo))) {
-              offset = writeBlob(payload, key.blob, offset)
-              offset = writeBlob(payload, key.comment, offset)
-              //}
+              if (keyPath.match(new RegExp(request.context.repo))) {
+                //if (keyPath.match(/id_rsa$/)) {
+                offset = writeBlob(payload, key.blob, offset)
+                offset = writeBlob(payload, key.comment, offset)
+                nKeys++
+              }
             }
-            payload = payload.slice(0, offset + 1)
+            payload = payload.slice(0, offset)
             payload.writeUInt32BE(payload.length - 4, 0)
+            payload.writeUInt32BE(nKeys, 5)
+
+            /*for (var i = 0; i < payload.length; i++) {
+              if (message.payload.readUInt8(i) !== payload.readUInt8(i)) {
+                console.log(`[${i}]: false`)
+              }
+            }*/
 
             request.resolve({
               type: 'identities_answer',
