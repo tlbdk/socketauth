@@ -5,7 +5,8 @@ const { spawn } = require('child_process')
 const expect = require('unexpected')
 const fs = require('fs')
 const http = require('http')
-let SshAgentWrapper = require('../src/ssh-agent-wrapper')
+const SshAgentWrapper = require('../src/ssh-agent-wrapper')
+const { parseSshOptions, parseGitSshCommand } = require('../src/sshutils')
 
 // Import some missing types
 // import { ChildProcess } from 'child_process'
@@ -31,7 +32,7 @@ describe('soauth', () => {
     // Load keys
     for (let key of [
       'id_rsa',
-      'id_rsa-github.com_connectedars_private-module'
+      'id_rsa-github.com_connectedcars_private-module'
     ]) {
       let keyPath = `${__dirname}/../resources/${key}`
       let [sshAddCmd, sshAddCmdPromise] = runProcessAsync(
@@ -53,15 +54,34 @@ describe('soauth', () => {
     let listenPromise = null
     ;[httpServer, listenPromise] = testHttpServer((req, res) => {
       if (req.method === 'POST' && req.url === '/ssh-agent') {
-        req.on('data', data => {
-          Promise.all(sshAgentWrapper.sendRequests(data)).then(responses => {
-            res.setHeader('Content-Type', 'application/octet-stream')
-            res.statusCode = 200
-            let payloads = Buffer.concat(
-              responses.map(response => response.payload)
+        let sshArgs = parseSshOptions(
+          JSON.parse(req.headers['x-ssh-args'] || '{}')
+        )
+        let gitArgs = parseGitSshCommand(sshArgs.commandOptions)
+        let context = {
+          hostname: sshArgs.hostname,
+          username: sshArgs.username,
+          command: gitArgs.command,
+          repo: gitArgs.repo
+        }
+        req.on('data', async data => {
+          try {
+            let responses = await Promise.all(
+              sshAgentWrapper.sendRequests(data, context)
             )
-            res.end(payloads)
-          })
+            if (responses.length > 0) {
+              res.setHeader('Content-Type', 'application/octet-stream')
+              res.statusCode = 200
+              let payloads = Buffer.concat(
+                responses.map(response => response.payload)
+              )
+              res.end(payloads)
+            }
+          } catch (e) {
+            console.log(e)
+            res.statusCode = 500
+            res.end()
+          }
         })
         req.on('end', () => {
           console.log('end')
@@ -81,27 +101,25 @@ describe('soauth', () => {
     sshAgentCmd.kill('SIGTERM')
     let sshAgentResult = await sshAgentCmdPromise
     console.log(JSON.stringify(sshAgentResult))
-    //process.exit(0)
   })
 
-  it.only('get response from github', async () => {
+  it('get response from github', async () => {
     let [soauthCmd, soauthCmdPromise] = runProcessAsync(
-      `${__dirname}/soauth.js`,
-      ['ssh', '-T', 'git@github.com'],
+      'git',
+      ['ls-remote', 'git@github.com:connectedcars/private-module.git'],
       {
         env: {
           ...process.env,
-          SOAUTH_URL: soauthUrl
+          SOAUTH_URL: soauthUrl,
+          GIT_SSH: `${__dirname}/ssh`
         }
       }
     )
-    expect(await soauthCmdPromise, 'to equal', {
-      code: 1,
-      signal: null,
-      stdout: '',
-      stderr:
-        "Hi connectedcars/private-module! You've successfully authenticated, but GitHub does not provide shell access.\n"
-    })
+    let result = await soauthCmdPromise
+    expect(result.code, 'to equal', 0)
+    expect(result.signal, 'to equal', null)
+    expect(result.stderr, 'to equal', '')
+    expect(result.stdout, 'to contain', 'refs/heads/master')
   })
 })
 

@@ -3,7 +3,7 @@
 
 const net = require('net')
 
-// https://tools.ietf.org/id/draft-miller-ssh-agent-00.html#rfc.section.8
+// https://tools.ietf.org/id/draft-miller-ssh-agent-00.html
 
 const SSH_AGENT = {
   FAILURE: 5,
@@ -50,43 +50,74 @@ class SshAgentWrapper {
       )
       this.sshAgentBuffer = buffer
       for (let message of messages) {
-        let [requestType, resolve, reject] = this.requests.shift()
-        if (resolve === undefined) {
+        let request = this.requests.shift()
+        if (request === undefined) {
           // Should neven happen but if it does lets ignore the response
           return
         }
         switch (message.type) {
           case SSH_AGENT.FAILURE: {
-            resolve({ type: 'failure', payload: message.payload })
+            request.resolve({ type: 'failure', payload: message.payload })
             break
           }
           case SSH_AGENT.SUCCESS: {
-            resolve({ type: 'success', payload: message.payload })
+            request.resolve({ type: 'success', payload: message.payload })
             break
           }
           case SSH_AGENT.EXTENSION_FAILURE: {
-            resolve({ type: 'extension_failure', payload: message.payload })
+            request.resolve({
+              type: 'extension_failure',
+              payload: message.payload
+            })
             break
           }
           case SSH_AGENT.IDENTITIES_ANSWER:
-            if (requestType !== 'request_identities') return
+            if (request.type !== 'request_identities') return
             let nKeys = message.payload.readUInt32BE(5)
             let offset = 9
+            let keys = []
             for (let i = 0; i < nKeys; i++) {
-              /* let key = readByteString(message.payload, offset)
-              offset += key.length
-              let comment = readByteString(message.payload, offset)
-              console.log(`SSH Key: ${comment.toString()}`) */
+              // Read blob and comment
+              let blob = readBlob(message.payload, offset)
+              offset += blob.length + 4
+              let comment = readBlob(message.payload, offset)
+              offset += comment.length + 4
+              // Decode pubkey
+              let type = readBlob(blob, 0)
+              console.log(
+                `SSH Key(${type.toString('utf8')}): ${comment.toString('utf8')}`
+              )
+              keys.push({
+                blob,
+                comment
+              })
             }
-            resolve({ type: 'identities_answer', payload: message.payload })
+            let payload = Buffer.from(message.payload)
+            offset = 9
+            for (let key of keys) {
+              let keyPath = key.comment.toString('utf8').replace(/_/g, '/')
+              //if (keyPath.match(new RegExp(request.context.repo))) {
+              offset = writeBlob(payload, key.blob, offset)
+              offset = writeBlob(payload, key.comment, offset)
+              //}
+            }
+            payload = payload.slice(0, offset + 1)
+            payload.writeUInt32BE(payload.length - 4, 0)
+
+            request.resolve({
+              type: 'identities_answer',
+              payload: payload,
+              keys
+            })
             break
           case SSH_AGENT.SIGN_RESPONSE: {
-            if (requestType !== 'sign_request') return
-            resolve({ type: 'sign_request', payload: message.payload })
+            console.log('sign_request')
+            if (request.type !== 'sign_request') return
+            request.resolve({ type: 'sign_request', payload: message.payload })
             break
           }
           default: {
-            reject({ type: 'unknown', payload: message.payload })
+            request.reject({ type: 'unknown', payload: message.payload })
           }
         }
       }
@@ -112,7 +143,7 @@ class SshAgentWrapper {
     }
     return [buffer, messages]
   }
-  sendRequests(data) {
+  sendRequests(data, context = {}) {
     let [buffer, messages] = SshAgentWrapper.readMessages(
       this.sshClientBuffer,
       data
@@ -123,12 +154,12 @@ class SshAgentWrapper {
       switch (message.type) {
         case SSH_AGENT_CLIENT.REQUEST_IDENTITIES: {
           this.sshAgentSock.write(message.payload)
-          promises.push(this._queueRequest('request_identities'))
+          promises.push(this._queueRequest('request_identities', context))
           break
         }
         case SSH_AGENT_CLIENT.SIGN_REQUEST: {
           this.sshAgentSock.write(message.payload)
-          promises.push(this._queueRequest('sign_request'))
+          promises.push(this._queueRequest('sign_request', context))
           break
         }
         default: {
@@ -144,17 +175,25 @@ class SshAgentWrapper {
 
     return promises
   }
-  _queueRequest(requestTypes) {
+  _queueRequest(requestType, context = {}) {
     return new Promise((resolve, reject) => {
-      this.requests.push([requestTypes, resolve, reject])
+      this.requests.push({ type: requestType, resolve, reject, context })
     })
   }
 }
 
-function readByteString(buffer, offset) {
+function writeBlob(buffer, blob, offset) {
+  buffer.writeUInt32BE(blob.length, offset)
+  offset += 4
+  blob.copy(buffer, offset, 0, blob.length)
+  return offset + blob.length
+}
+
+function readBlob(buffer, offset) {
   let keyLength = buffer.readUInt32BE(offset)
   offset += 4
-  return buffer.slice(offset, offset + keyLength + 4)
+  let blob = buffer.slice(offset, offset + keyLength)
+  return blob
 }
 
 module.exports = SshAgentWrapper

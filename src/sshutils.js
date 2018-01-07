@@ -40,6 +40,10 @@ function parseSshOptions(args) {
 }
 
 function parseGitSshCommand(args) {
+  args = args.reduce((last, current) => {
+    return [...last, ...current.split(/\s+/)]
+  }, [])
+
   let command = null
   let repo = null
   if (args.length === 2) {

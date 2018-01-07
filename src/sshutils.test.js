@@ -70,6 +70,23 @@ describe('sshutils', () => {
         }
       )
     })
+    it(`-v4 git@github.com git-upload-pack 'tlbdk/socketauth.git'`, () => {
+      expect(
+        parseSshOptions([
+          '-v4',
+          'git@github.com',
+          'git-upload-pack',
+          "'tlbdk/socketauth.git'"
+        ]),
+        'to equal',
+        {
+          sshOptions: { v: true, '4': true },
+          username: 'git',
+          hostname: 'github.com',
+          commandOptions: ['git-upload-pack', "'tlbdk/socketauth.git'"]
+        }
+      )
+    })
     it('-v4l git github.com', () => {
       expect(parseSshOptions(['-v4l', 'git', 'github.com']), 'to equal', {
         sshOptions: { v: true, l: 'git', '4': true },
@@ -107,6 +124,16 @@ describe('sshutils', () => {
     it(`git-upload-pack 'tlbdk/socketauth.git'`, () => {
       expect(
         parseGitSshCommand(['git-upload-pack', `'tlbdk/socketauth.git'`]),
+        'to equal',
+        {
+          command: 'git-upload-pack',
+          repo: 'tlbdk/socketauth'
+        }
+      )
+    })
+    it(`git-upload-pack 'tlbdk/socketauth.git'`, () => {
+      expect(
+        parseGitSshCommand([`git-upload-pack 'tlbdk/socketauth.git'`]),
         'to equal',
         {
           command: 'git-upload-pack',

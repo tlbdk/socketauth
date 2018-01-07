@@ -24,6 +24,17 @@
             }
         },
         {
+            "name": "ssh",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/ssh",
+            "args": ["-v", "git@github.com"],
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "SOAUTH_URL": "http://test:test@localhost:3000/ssh-agent"
+            }
+        },
+        {
             "name": "soauth-server",
             "type": "node",
             "request": "launch",

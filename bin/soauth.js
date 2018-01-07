@@ -12,9 +12,18 @@ const net = require('net')
 const fs = require('fs')
 const httpRequest = require('../src/httprequest')
 
-if (process.argv.length < 3) {
+let command = ''
+let args = []
+
+if (process.argv[1].match(/\/ssh$/)) {
+  command = 'ssh'
+  args = process.argv.slice(2)
+} else if (process.argv.length < 3) {
   console.log('soauth command [options]')
   process.exit(255)
+} else {
+  command = process.argv[2]
+  args = process.argv.slice(3)
 }
 
 // http://username:password@localhost:3000/
@@ -27,10 +36,7 @@ if (!delete environment['SOAUTH_URL']) {
   process.exit(255)
 }
 
-let command = process.argv[2]
-let args = process.argv.slice(3)
 let sockPath = `${process.cwd()}/soauth.sock`
-
 if (fs.existsSync(sockPath)) {
   fs.unlinkSync(sockPath)
 }
